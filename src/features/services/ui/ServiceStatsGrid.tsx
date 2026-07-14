@@ -1,19 +1,19 @@
 
 import * as React from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { ClientStatsDto } from "../api/clients.service"
-import { Users, UserCheck, FileWarning } from "lucide-react"
+import { ServiceStatsDto } from "../api/services.service"
+import { ServerCrash, Play, Pause, Activity } from "lucide-react"
 
-export function ClientStatsGrid({ stats }: { stats?: ClientStatsDto }) {
+export function ServiceStatsGrid({ stats }: { stats?: ServiceStatsDto }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
           <div className="p-3 bg-primary/10 rounded-full">
-            <Users className="h-6 w-6 text-primary" />
+            <ServerCrash className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Clientes</p>
+            <p className="text-sm font-medium text-muted-foreground">Total Servicios</p>
             <h3 className="text-2xl font-bold">{stats?.total ?? '--'}</h3>
           </div>
         </CardContent>
@@ -21,7 +21,7 @@ export function ClientStatsGrid({ stats }: { stats?: ClientStatsDto }) {
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
           <div className="p-3 bg-green-500/10 rounded-full">
-            <UserCheck className="h-6 w-6 text-green-500" />
+            <Play className="h-6 w-6 text-green-500" />
           </div>
           <div>
             <p className="text-sm font-medium text-muted-foreground">Activos</p>
@@ -31,23 +31,23 @@ export function ClientStatsGrid({ stats }: { stats?: ClientStatsDto }) {
       </Card>
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-blue-500/10 rounded-full">
-            <Users className="h-6 w-6 text-blue-500" />
+          <div className="p-3 bg-red-500/10 rounded-full">
+            <Pause className="h-6 w-6 text-red-500" />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Con Servicios</p>
-            <h3 className="text-2xl font-bold">{stats?.withServices ?? '--'}</h3>
+            <p className="text-sm font-medium text-muted-foreground">Suspendidos</p>
+            <h3 className="text-2xl font-bold">{stats?.suspended ?? '--'}</h3>
           </div>
         </CardContent>
       </Card>
       <Card>
         <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-red-500/10 rounded-full">
-            <FileWarning className="h-6 w-6 text-red-500" />
+          <div className="p-3 bg-amber-500/10 rounded-full">
+            <Activity className="h-6 w-6 text-amber-500" />
           </div>
           <div>
-            <p className="text-sm font-medium text-muted-foreground">Morosos</p>
-            <h3 className="text-2xl font-bold">{stats?.delinquent ?? '--'}</h3>
+            <p className="text-sm font-medium text-muted-foreground">Ops Pendientes</p>
+            <h3 className="text-2xl font-bold">{stats?.pendingOperations ?? '--'}</h3>
           </div>
         </CardContent>
       </Card>

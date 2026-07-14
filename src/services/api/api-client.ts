@@ -30,7 +30,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     try {
       const errorData = await response.json();
       if (errorData.message) errorMessage = errorData.message;
-    } catch (_) {
+    } catch {
       // Ignorar si no es JSON
     }
     throw new ApiError(errorMessage, response.status);
@@ -42,7 +42,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   try {
     return JSON.parse(text) as T;
-  } catch (_) {
+  } catch {
     return text as unknown as T;
   }
 }

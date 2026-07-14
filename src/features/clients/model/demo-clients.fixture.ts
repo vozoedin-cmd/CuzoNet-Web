@@ -79,6 +79,7 @@ export const getDemoClientDetails = (id: string): ClientDetailsDto => {
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getDemoClientServices = (id: string): ClientServiceDto[] => {
   return [
     { id: 'srv-1', planName: 'Fibra Óptica 500Mbps Corp', status: 'active', price: 2500, installedAt: new Date(Date.now() - 86400000 * 200).toISOString() }
