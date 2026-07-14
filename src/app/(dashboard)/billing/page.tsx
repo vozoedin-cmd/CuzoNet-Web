@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { BillingOverview } from "@/features/billing"
+
+export default function BillingPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <PageHeader
-        title="Facturación"
-        description="Control de pagos, morosidad e ingresos"
-        breadcrumb={[{ label: "Facturación" }]}
+        title="Facturación y Cobranza"
+        description="Gestión financiera, pagos y estados de cuenta"
+        breadcrumb={[{ label: "Billing" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Facturación</p>
-      </div>
+      <BillingOverview />
     </div>
   )
 }
