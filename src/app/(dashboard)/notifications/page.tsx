@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { NotificationsOverview } from "@/features/notifications"
+
+export default function NotificationsPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Notificaciones"
-        description="Historial de mensajes enviados"
+    <div className="space-y-6 pb-10">
+      <PageHeader 
+        title="Centro de Notificaciones" 
+        description="Seguimiento de envíos (WhatsApp, Telegram, Email, Webhooks)"
         breadcrumb={[{ label: "Notificaciones" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Notificaciones</p>
-      </div>
+      <NotificationsOverview />
     </div>
   )
 }
