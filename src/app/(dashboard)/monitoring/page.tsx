@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { MonitoringOverview } from "@/features/monitoring"
+
+export default function MonitoringPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Monitoreo"
-        description="Telemetría y series de tiempo"
+    <div className="space-y-6 pb-10">
+      <PageHeader 
+        title="Monitoreo de Rendimiento" 
+        description="Telemetría en tiempo real y estadísticas de infraestructura"
         breadcrumb={[{ label: "Monitoreo" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Monitoreo</p>
-      </div>
+      <MonitoringOverview />
     </div>
   )
 }
