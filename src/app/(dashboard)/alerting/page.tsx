@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { AlertingOverview } from "@/features/alerting"
+
+export default function AlertingPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Alertas"
-        description="Gestión de incidencias y umbrales"
+    <div className="space-y-6 pb-10">
+      <PageHeader 
+        title="Gestión de Alertas" 
+        description="Centro de incidentes, resoluciones y telemetría crítica"
         breadcrumb={[{ label: "Alertas" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Alertas</p>
-      </div>
+      <AlertingOverview />
     </div>
   )
 }
