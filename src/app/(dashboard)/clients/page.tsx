@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { ClientsOverview } from "@/features/clients"
+
+export default function ClientsPage() {
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Clientes"
-        description="Gestión de suscriptores y clientes corporativos"
+    <div className="space-y-6 pb-10">
+      <PageHeader 
+        title="Gestión de Clientes" 
+        description="Administración de padrón, contactos y estado de cuenta"
         breadcrumb={[{ label: "Clientes" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Clientes</p>
-      </div>
+      <ClientsOverview />
     </div>
   )
 }
