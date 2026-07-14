@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { WorkersOverview } from "@/features/workers"
+
+export default function WorkersPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <PageHeader
-        title="Workers"
-        description="Estado de trabajos en segundo plano"
+        title="Gestor de Nodos e Infraestructura"
+        description="Monitorización de workers asíncronos y colas distribuidas"
         breadcrumb={[{ label: "Workers" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Workers</p>
-      </div>
+      <WorkersOverview />
     </div>
   )
 }
