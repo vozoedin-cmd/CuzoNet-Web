@@ -1,16 +1,17 @@
-import { PageHeader } from "@/components/layout/PageHeader"
 
-export default function Page() {
+import * as React from "react"
+import { PageHeader } from "@/components/layout/PageHeader"
+import { AnalyticsOverview } from "@/features/analytics"
+
+export default function ReportsPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <PageHeader
-        title="Reportes"
-        description="Informes consolidados y analíticas"
-        breadcrumb={[{ label: "Reportes" }]}
+        title="Business Intelligence y Reportes"
+        description="Métricas ejecutivas, tendencias de red e ingresos"
+        breadcrumb={[{ label: "Analytics" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo Reportes</p>
-      </div>
+      <AnalyticsOverview />
     </div>
   )
 }
