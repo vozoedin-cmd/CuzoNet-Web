@@ -5,6 +5,7 @@ import * as React from "react"
 import { Sidebar } from "./Sidebar"
 import { Topbar } from "./Topbar"
 import { ContentContainer } from "./ContentContainer"
+import { AiAssistantDrawer } from "@/features/ai-assistant"
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           {children}
         </ContentContainer>
       </div>
+      <AiAssistantDrawer />
     </div>
   )
 }

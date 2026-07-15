@@ -1,16 +1,16 @@
+import * as React from "react"
 import { PageHeader } from "@/components/layout/PageHeader"
+import { AiAssistantOverview } from "@/features/ai-assistant"
 
-export default function Page() {
+export default function AiAssistantPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       <PageHeader
-        title="IA Assistant"
-        description="Asistente de red automatizado"
-        breadcrumb={[{ label: "IA Assistant" }]}
+        title="AI Assistant"
+        description="Asistente operativo de red y facturación"
+        breadcrumb={[{ label: "AI Assistant" }]}
       />
-      <div className="rounded-xl border bg-card text-card-foreground shadow-sm h-64 flex items-center justify-center">
-        <p className="text-muted-foreground">Placeholder para el módulo IA Assistant</p>
-      </div>
+      <AiAssistantOverview />
     </div>
   )
 }

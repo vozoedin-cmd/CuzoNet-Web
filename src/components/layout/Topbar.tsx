@@ -8,9 +8,12 @@ import { SearchBox } from "./SearchBox"
 import { ThemeToggle } from "./ThemeToggle"
 import { NotificationButton } from "./NotificationButton"
 import { UserMenu } from "./UserMenu"
+import { Sparkles } from "lucide-react"
+import { useAiAssistantStore } from "@/features/ai-assistant"
 
 export function Topbar() {
   const toggleSidebar = useLayoutStore((s) => s.toggleSidebar)
+  const openDrawer = useAiAssistantStore((s) => s.openDrawer)
 
   return (
     <header className="sticky top-0 z-30 flex h-14 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -21,6 +24,9 @@ export function Topbar() {
         <SearchBox />
       </div>
       <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={openDrawer} title="AI Assistant">
+          <Sparkles className="h-4 w-4 text-primary" />
+        </Button>
         <ThemeToggle />
         <NotificationButton />
         <div className="ml-2">
