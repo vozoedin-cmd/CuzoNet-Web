@@ -1,54 +1,63 @@
+﻿import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { plansService, GetPlansParams, PlanDto, PlanVersionDto, PlanStatus } from '../api/plans.service';
+import type { ApiError } from '@/services/api/api-client';
 
-export function usePlans(companyId: string, params: GetPlansParams) {
-  return useQuery({
-    queryKey: ['plans', companyId, params],
-    queryFn: () => plansService.getPlans(companyId, params),
+import {
+  plansService,
+  type CreatePlanRequest,
+  type PlanDto,
+  type PlanMutationOptions,
+  type RevisePlanRequest,
+} from '../api/plans.service';
+
+export const planKeys = {
+  all: ['plans'] as const,
+  list: () => [...planKeys.all, 'list'] as const,
+};
+
+export function usePlans() {
+  return useQuery<PlanDto[], ApiError>({
+    queryKey: planKeys.list(),
+    queryFn: ({ signal }) => plansService.getPlans(signal),
+    refetchInterval: 30_000,
   });
 }
 
-export function usePlan(companyId: string, planId: string | null) {
-  return useQuery({
-    queryKey: ['plan', 'detail', companyId, planId],
-    queryFn: () => plansService.getPlan(companyId, planId!),
-    enabled: !!planId,
-  });
+interface CreatePlanVariables {
+  data: CreatePlanRequest;
+  options?: PlanMutationOptions;
 }
 
-export function usePlanVersion(companyId: string, planId: string | null, versionId: string | null) {
-  return useQuery({
-    queryKey: ['plan', 'version', companyId, planId, versionId],
-    queryFn: () => plansService.getPlanVersion(companyId, planId!, versionId!),
-    enabled: !!planId && !!versionId,
-  });
-}
-
-export function usePlanMutations(companyId: string) {
+export function useCreatePlan() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['plans'] });
-  const invalidateDetail = (id: string) => queryClient.invalidateQueries({ queryKey: ['plan', 'detail', companyId, id] });
 
-  const createPlan = useMutation({
-    mutationFn: (data: Partial<PlanDto>) => plansService.createPlan(companyId, data),
-    onSuccess: invalidate,
+  return useMutation<PlanDto, ApiError, CreatePlanVariables>({
+    mutationFn: ({ data, options }) => plansService.createPlan(data, options),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: planKeys.list() });
+    },
   });
+}
 
-  const createPlanVersion = useMutation({
-    mutationFn: ({ planId, data }: { planId: string; data: Partial<PlanVersionDto> }) => plansService.createPlanVersion(companyId, planId, data),
-    onSuccess: (_, v) => { invalidate(); invalidateDetail(v.planId); },
+interface RevisePlanVariables {
+  data: RevisePlanRequest;
+  options?: PlanMutationOptions;
+  planId: string;
+}
+
+export function useRevisePlan() {
+  const queryClient = useQueryClient();
+
+  return useMutation<PlanDto, ApiError, RevisePlanVariables>({
+    mutationFn: ({ data, options, planId }) =>
+      plansService.revisePlan(planId, data, options),
+    onSuccess: (revisedPlan) => {
+      queryClient.setQueryData<PlanDto[]>(planKeys.list(), (plans) =>
+        plans?.map((plan) =>
+          plan.id === revisedPlan.id ? revisedPlan : plan,
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: planKeys.list() });
+    },
   });
-
-  const publishPlanVersion = useMutation({
-    mutationFn: ({ planId, versionId }: { planId: string; versionId: string }) => plansService.publishPlanVersion(companyId, planId, versionId),
-    onSuccess: (_, v) => { invalidate(); invalidateDetail(v.planId); },
-  });
-
-  const changePlanStatus = useMutation({
-    mutationFn: ({ planId, status }: { planId: string; status: PlanStatus }) => plansService.changePlanStatus(companyId, planId, status),
-    onSuccess: (_, v) => { invalidate(); invalidateDetail(v.planId); },
-  });
-
-  return { createPlan, createPlanVersion, publishPlanVersion, changePlanStatus };
 }

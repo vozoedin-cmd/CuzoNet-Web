@@ -1,20 +1,26 @@
+﻿import type { PlanDto } from '../api/plans.service';
+import { usePlansStore } from '../model/plans.store';
+import { PlanActivityBadge, ServiceTypeBadge } from './PlanBadges';
 
-import * as React from "react"
-import { PlanDto } from "../api/plans.service"
-import { PlanStatusBadge, ServiceTypeBadge, PlanVersionStatusBadge } from "./PlanBadges"
-import { usePlansStore } from "../model/plans.store"
+const numberFormatter = new Intl.NumberFormat('es-GT', {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
 
-export function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(cents / 100);
+const speedFormatter = new Intl.NumberFormat('es-GT', {
+  maximumFractionDigits: 2,
+});
+
+export function formatPriceCents(cents: number): string {
+  return numberFormatter.format(cents / 100);
 }
 
-export function formatKbps(kbps: number) {
-  if (kbps >= 1024) return `${(kbps / 1024).toFixed(0)} Mbps`;
-  return `${kbps} Kbps`;
+export function formatKbps(kbps: number): string {
+  return speedFormatter.format(kbps / 1000) + ' Mbps';
 }
 
-export function PlanTable({ plans }: { plans: PlanDto[] }) {
-  const { selectPlan } = usePlansStore();
+export function PlanTable({ plans }: { plans: readonly PlanDto[] }) {
+  const selectPlan = usePlansStore((state) => state.selectPlan);
 
   return (
     <div className="w-full overflow-auto rounded-xl border bg-card">
@@ -22,57 +28,51 @@ export function PlanTable({ plans }: { plans: PlanDto[] }) {
         <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
           <tr>
             <th className="px-4 py-3 font-medium">Código / Nombre</th>
-            <th className="px-4 py-3 font-medium">Compatibilidad</th>
+            <th className="px-4 py-3 font-medium">Tipo</th>
             <th className="px-4 py-3 font-medium">Estado</th>
-            <th className="px-4 py-3 font-medium">Precio (Vigente)</th>
+            <th className="px-4 py-3 font-medium">Precio vigente</th>
             <th className="px-4 py-3 font-medium">Subida / Bajada</th>
-            <th className="px-4 py-3 font-medium">Versiones</th>
+            <th className="px-4 py-3 font-medium">Versión vigente</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {plans.map(p => (
-            <tr 
-              key={p.id} 
+          {plans.map((plan) => (
+            <tr
+              key={plan.id}
               className="hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => selectPlan(p.id)}
+              onClick={() => selectPlan(plan.id)}
             >
               <td className="px-4 py-3">
-                <p className="font-mono text-xs font-bold text-primary">{p.code}</p>
-                <p className="font-semibold text-sm">{p.name}</p>
+                <p className="font-mono text-xs font-bold text-primary">
+                  {plan.code}
+                </p>
+                <p className="font-semibold text-sm">{plan.name}</p>
               </td>
               <td className="px-4 py-3">
-                <ServiceTypeBadge type={p.compatibleServiceType} />
+                <ServiceTypeBadge type={plan.serviceType} />
               </td>
               <td className="px-4 py-3">
-                <PlanStatusBadge status={p.status} />
-              </td>
-              <td className="px-4 py-3 text-xs font-bold">
-                {p.currentVersion ? formatMoney(p.currentVersion.priceCents, p.currentVersion.currencyCode) : '--'}
+                <PlanActivityBadge isActive={plan.isActive} />
               </td>
               <td className="px-4 py-3 text-xs">
-                {p.currentVersion ? (
-                  <span className="font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {formatKbps(p.currentVersion.uploadKbps)} / {formatKbps(p.currentVersion.downloadKbps)}
-                  </span>
-                ) : '--'}
+                <p className="font-bold">
+                  {formatPriceCents(plan.currentVersion.priceCents)}
+                </p>
+                <p className="text-muted-foreground">
+                  Moneda: No disponible
+                </p>
+              </td>
+              <td className="px-4 py-3 text-xs font-mono text-muted-foreground">
+                {formatKbps(plan.currentVersion.uploadKbps)} /{' '}
+                {formatKbps(plan.currentVersion.downloadKbps)}
               </td>
               <td className="px-4 py-3 text-xs">
-                <div className="flex flex-col gap-1">
-                  <span>{p.versionsCount} versiones</span>
-                  {p.currentVersion && <PlanVersionStatusBadge status={p.currentVersion.status} />}
-                </div>
+                v{plan.currentVersion.version}
               </td>
             </tr>
           ))}
-          {plans.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                No se encontraron planes comerciales.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

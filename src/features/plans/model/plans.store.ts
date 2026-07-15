@@ -1,43 +1,55 @@
+﻿import { create } from 'zustand';
 
-import { create } from 'zustand';
+import type { PlanServiceType } from '../api/plans.service';
 
-export type PlanModalType = 'none' | 'create_plan' | 'create_version' | 'publish_version' | 'change_status';
+export type PlanModalType = 'none' | 'create' | 'revise';
 
-interface PlansState {
-  viewMode: 'table' | 'cards';
-  selectedPlanId: string | null;
-  selectedVersionId: string | null;
-  drawerOpen: boolean;
-  activeModal: PlanModalType;
-  filters: {
-    search: string;
-    status: string;
-    compatibleServiceType: string;
-    currencyCode: string;
-  };
-
-  setViewMode: (mode: 'table' | 'cards') => void;
-  selectPlan: (id: string | null) => void;
-  selectVersion: (id: string | null) => void;
-  setDrawerOpen: (open: boolean) => void;
-  setActiveModal: (modal: PlanModalType) => void;
-  setFilter: (key: string, value: string) => void;
-  clearFilters: () => void;
+interface PlanFilters {
+  isActive: '' | 'active' | 'inactive';
+  search: string;
+  serviceType: PlanServiceType | '';
 }
 
-export const usePlansStore = create<PlansState>((set) => ({
-  viewMode: 'table',
-  selectedPlanId: null,
-  selectedVersionId: null,
-  drawerOpen: false,
-  activeModal: 'none',
-  filters: { search: '', status: '', compatibleServiceType: '', currencyCode: '' },
+interface PlansState {
+  activeModal: PlanModalType;
+  drawerOpen: boolean;
+  filters: PlanFilters;
+  selectedPlanId: string | null;
+  viewMode: 'table' | 'cards';
+  clearFilters: () => void;
+  selectPlan: (planId: string | null) => void;
+  setActiveModal: (modal: PlanModalType) => void;
+  setDrawerOpen: (open: boolean) => void;
+  setFilter: <TKey extends keyof PlanFilters>(
+    key: TKey,
+    value: PlanFilters[TKey],
+  ) => void;
+  setViewMode: (mode: 'table' | 'cards') => void;
+}
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-  selectPlan: (id) => set({ selectedPlanId: id, drawerOpen: !!id }),
-  selectVersion: (id) => set({ selectedVersionId: id }),
-  setDrawerOpen: (open) => set({ drawerOpen: open, selectedPlanId: open ? undefined : null, selectedVersionId: null }),
-  setActiveModal: (modal) => set({ activeModal: modal }),
-  setFilter: (key, value) => set((state) => ({ filters: { ...state.filters, [key]: value } })),
-  clearFilters: () => set({ filters: { search: '', status: '', compatibleServiceType: '', currencyCode: '' } }),
+const emptyFilters: PlanFilters = {
+  isActive: '',
+  search: '',
+  serviceType: '',
+};
+
+export const usePlansStore = create<PlansState>((set) => ({
+  activeModal: 'none',
+  drawerOpen: false,
+  filters: emptyFilters,
+  selectedPlanId: null,
+  viewMode: 'table',
+
+  clearFilters: () => set({ filters: emptyFilters }),
+  selectPlan: (selectedPlanId) =>
+    set({ drawerOpen: selectedPlanId !== null, selectedPlanId }),
+  setActiveModal: (activeModal) => set({ activeModal }),
+  setDrawerOpen: (drawerOpen) =>
+    set((state) => ({
+      drawerOpen,
+      selectedPlanId: drawerOpen ? state.selectedPlanId : null,
+    })),
+  setFilter: (key, value) =>
+    set((state) => ({ filters: { ...state.filters, [key]: value } })),
+  setViewMode: (viewMode) => set({ viewMode }),
 }));
