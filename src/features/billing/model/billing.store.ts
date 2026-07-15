@@ -1,46 +1,61 @@
-
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 
 export type BillingModalType = 'none' | 'register_payment' | 'client_account';
 
-interface BillingState {
-  viewMode: 'table' | 'cards';
-  selectedPaymentId: string | null;
-  selectedClientId: string | null;
-  drawerOpen: boolean;
-  activeModal: BillingModalType;
-  filters: {
-    search: string;
-    clientId: string;
-    method: string;
-    status: string;
-    currencyCode: string;
-    dateFrom: string;
-    dateTo: string;
-  };
-
-  setViewMode: (mode: 'table' | 'cards') => void;
-  selectPayment: (id: string | null) => void;
-  selectClient: (id: string | null) => void;
-  setDrawerOpen: (open: boolean) => void;
-  setActiveModal: (modal: BillingModalType) => void;
-  setFilter: (key: string, value: string) => void;
-  clearFilters: () => void;
+interface BillingFilters {
+  clientId: string;
+  from: string;
+  to: string;
 }
 
-export const useBillingStore = create<BillingState>((set) => ({
-  viewMode: 'table',
-  selectedPaymentId: null,
-  selectedClientId: null,
-  drawerOpen: false,
-  activeModal: 'none',
-  filters: { search: '', clientId: '', method: '', status: '', currencyCode: '', dateFrom: '', dateTo: '' },
+interface BillingState {
+  activeModal: BillingModalType;
+  drawerOpen: boolean;
+  filters: BillingFilters;
+  page: number;
+  pageSize: number;
+  selectedClientId: string | null;
+  selectedPaymentId: string | null;
+  viewMode: 'table' | 'cards';
+  clearFilters: () => void;
+  selectPayment: (paymentId: string | null) => void;
+  setActiveModal: (modal: BillingModalType) => void;
+  setDrawerOpen: (open: boolean) => void;
+  setFilters: (filters: BillingFilters) => void;
+  setPage: (page: number) => void;
+  setPageSize: (pageSize: number) => void;
+  setSelectedClientId: (clientId: string | null) => void;
+  setViewMode: (mode: 'table' | 'cards') => void;
+}
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-  selectPayment: (id) => set({ selectedPaymentId: id, drawerOpen: !!id }),
-  selectClient: (id) => set({ selectedClientId: id }),
-  setDrawerOpen: (open) => set({ drawerOpen: open, selectedPaymentId: open ? undefined : null }),
-  setActiveModal: (modal) => set({ activeModal: modal }),
-  setFilter: (key, value) => set((state) => ({ filters: { ...state.filters, [key]: value } })),
-  clearFilters: () => set({ filters: { search: '', clientId: '', method: '', status: '', currencyCode: '', dateFrom: '', dateTo: '' } }),
+const emptyFilters: BillingFilters = {
+  clientId: '',
+  from: '',
+  to: '',
+};
+
+export const useBillingStore = create<BillingState>((set) => ({
+  activeModal: 'none',
+  drawerOpen: false,
+  filters: emptyFilters,
+  page: 1,
+  pageSize: 20,
+  selectedClientId: null,
+  selectedPaymentId: null,
+  viewMode: 'table',
+
+  clearFilters: () => set({ filters: emptyFilters, page: 1 }),
+  selectPayment: (selectedPaymentId) =>
+    set({ drawerOpen: selectedPaymentId !== null, selectedPaymentId }),
+  setActiveModal: (activeModal) => set({ activeModal }),
+  setDrawerOpen: (drawerOpen) =>
+    set((state) => ({
+      drawerOpen,
+      selectedPaymentId: drawerOpen ? state.selectedPaymentId : null,
+    })),
+  setFilters: (filters) => set({ filters, page: 1 }),
+  setPage: (page) => set({ page }),
+  setPageSize: (pageSize) => set({ page: 1, pageSize }),
+  setSelectedClientId: (selectedClientId) => set({ selectedClientId }),
+  setViewMode: (viewMode) => set({ viewMode }),
 }));

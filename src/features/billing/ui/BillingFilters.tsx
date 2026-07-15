@@ -1,63 +1,101 @@
+﻿import { useRef, type FormEvent } from 'react';
+import { FileText, FilterX, Plus, Search } from 'lucide-react';
 
-import * as React from "react"
-import { useBillingStore } from "../model/billing.store"
-import { Button } from "@/components/ui/button"
-import { FilterX, Plus, FileText } from "lucide-react"
+import { Button } from '@/components/ui/button';
+
+import { useBillingStore } from '../model/billing.store';
 
 export function BillingFilters() {
-  const { filters, setFilter, clearFilters, setActiveModal } = useBillingStore();
-  const selectClass = "flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+  const formRef = useRef<HTMLFormElement>(null);
+  const clearFilters = useBillingStore((state) => state.clearFilters);
+  const filters = useBillingStore((state) => state.filters);
+  const setActiveModal = useBillingStore((state) => state.setActiveModal);
+  const setFilters = useBillingStore((state) => state.setFilters);
+  const setSelectedClientId = useBillingStore(
+    (state) => state.setSelectedClientId,
+  );
+  const inputClass =
+    'flex h-9 min-w-0 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring';
+
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setFilters({
+      clientId: String(form.get('clientId') ?? '').trim(),
+      from: String(form.get('from') ?? ''),
+      to: String(form.get('to') ?? ''),
+    });
+  };
+
+  const openAccount = () => {
+    setSelectedClientId(
+      filters.clientId.trim().length > 0 ? filters.clientId : null,
+    );
+    setActiveModal('client_account');
+  };
 
   return (
-    <div className="flex flex-col md:flex-row gap-4 items-center bg-card p-4 rounded-xl border flex-wrap">
-      <div className="flex-1 min-w-[150px]">
-        <input 
-          type="text" 
-          placeholder="Buscar referencia o ID..." 
-          value={filters.search}
-          onChange={(e) => setFilter('search', e.target.value)}
-          className={selectClass}
+    <form
+      ref={formRef}
+      onSubmit={onSubmit}
+      className="flex flex-col md:flex-row gap-3 items-end bg-card p-4 rounded-xl border flex-wrap"
+    >
+      <label className="flex flex-col gap-1 flex-[2] w-full">
+        <span className="text-xs text-muted-foreground">Client ID</span>
+        <input
+          name="clientId"
+          defaultValue={filters.clientId}
+          placeholder="UUID del cliente"
+          className={inputClass}
         />
-      </div>
-      <div className="flex-1 min-w-[150px]">
-        <input 
-          type="text" 
-          placeholder="Client ID..." 
-          value={filters.clientId}
-          onChange={(e) => setFilter('clientId', e.target.value)}
-          className={selectClass}
+      </label>
+      <label className="flex flex-col gap-1 flex-1 w-full">
+        <span className="text-xs text-muted-foreground">Desde</span>
+        <input
+          name="from"
+          type="date"
+          defaultValue={filters.from}
+          className={inputClass}
         />
-      </div>
-      <div className="flex-1 min-w-[120px]">
-        <select value={filters.method} onChange={(e) => setFilter('method', e.target.value)} className={selectClass}>
-          <option value="">Método (Todos)</option>
-          <option value="cash">Efectivo</option>
-          <option value="transfer">Transferencia</option>
-          <option value="credit_card">T. Crédito</option>
-          <option value="debit_card">T. Débito</option>
-          <option value="oxxo">OXXO Pay</option>
-          <option value="stripe">Stripe</option>
-        </select>
-      </div>
-      <div className="flex-1 min-w-[120px]">
-        <select value={filters.status} onChange={(e) => setFilter('status', e.target.value)} className={selectClass}>
-          <option value="">Estado (Todos)</option>
-          <option value="completed">Completado</option>
-          <option value="pending">Pendiente</option>
-          <option value="failed">Fallido</option>
-        </select>
-      </div>
-      <Button variant="outline" onClick={clearFilters} className="w-full md:w-auto flex items-center gap-2">
+      </label>
+      <label className="flex flex-col gap-1 flex-1 w-full">
+        <span className="text-xs text-muted-foreground">Hasta</span>
+        <input
+          name="to"
+          type="date"
+          defaultValue={filters.to}
+          className={inputClass}
+        />
+      </label>
+      <Button type="submit" variant="outline" className="w-full md:w-auto gap-2">
+        <Search className="h-4 w-4" /> Aplicar
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          formRef.current?.reset();
+          clearFilters();
+        }}
+        className="w-full md:w-auto gap-2"
+      >
         <FilterX className="h-4 w-4" /> Limpiar
       </Button>
-      <div className="flex gap-2 w-full md:w-auto">
-        <Button variant="secondary" onClick={() => setActiveModal('client_account')} className="flex-1 md:flex-none flex items-center gap-2">
-          <FileText className="h-4 w-4" /> Estado Cta.
-        </Button>
-        <Button variant="default" onClick={() => setActiveModal('register_payment')} className="flex-1 md:flex-none flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Registrar Pago
-        </Button>
-      </div>
-    </div>
-  )
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={openAccount}
+        className="w-full md:w-auto gap-2"
+      >
+        <FileText className="h-4 w-4" /> Cuenta cliente
+      </Button>
+      <Button
+        type="button"
+        onClick={() => setActiveModal('register_payment')}
+        className="w-full md:w-auto gap-2"
+      >
+        <Plus className="h-4 w-4" /> Registrar pago
+      </Button>
+    </form>
+  );
 }

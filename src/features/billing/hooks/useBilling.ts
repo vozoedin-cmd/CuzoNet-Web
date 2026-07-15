@@ -1,51 +1,69 @@
+﻿import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { billingService, GetPaymentsParams, PaymentDto } from '../api/billing.service';
+import type { ApiError } from '@/services/api/api-client';
 
-export function usePayments(companyId: string, params: GetPaymentsParams) {
-  return useQuery({
-    queryKey: ['payments', companyId, params],
-    queryFn: () => billingService.getPayments(companyId, params),
+import {
+  billingService,
+  type BillingMutationOptions,
+  type ClientAccountDto,
+  type CreatePaymentRequest,
+  type GetPaymentsParams,
+  type PaymentDto,
+  type PaymentPageDto,
+} from '../api/billing.service';
+
+export const billingKeys = {
+  all: ['billing'] as const,
+  paymentLists: () => [...billingKeys.all, 'payments'] as const,
+  payments: (params: GetPaymentsParams) =>
+    [...billingKeys.paymentLists(), params] as const,
+  accounts: () => [...billingKeys.all, 'accounts'] as const,
+  account: (clientId: string) => [...billingKeys.accounts(), clientId] as const,
+};
+
+export function getRegisterPaymentInvalidationKeys(clientId: string) {
+  return [billingKeys.paymentLists(), billingKeys.account(clientId)] as const;
+}
+
+export function usePayments(params: GetPaymentsParams) {
+  return useQuery<PaymentPageDto, ApiError>({
+    queryKey: billingKeys.payments(params),
+    queryFn: ({ signal }) => billingService.getPayments(params, signal),
+    placeholderData: keepPreviousData,
+    refetchInterval: 30_000,
   });
 }
 
-export function usePayment(companyId: string, paymentId: string | null) {
-  return useQuery({
-    queryKey: ['payment', 'detail', companyId, paymentId],
-    queryFn: () => billingService.getPayment(companyId, paymentId!),
-    enabled: !!paymentId,
+export function useClientAccount(clientId: string | null) {
+  return useQuery<ClientAccountDto, ApiError>({
+    queryKey: billingKeys.account(clientId ?? ''),
+    queryFn: ({ signal }) =>
+      billingService.getClientAccount(clientId ?? '', signal),
+    enabled: clientId !== null && clientId.length > 0,
   });
 }
 
-export function useClientAccount(companyId: string, clientId: string | null) {
-  return useQuery({
-    queryKey: ['billing', 'account', companyId, clientId],
-    queryFn: () => billingService.getClientAccount(companyId, clientId!),
-    enabled: !!clientId,
-  });
+interface RegisterPaymentVariables {
+  data: CreatePaymentRequest;
+  options?: BillingMutationOptions;
 }
 
-export function useClientStatement(companyId: string, clientId: string | null) {
-  return useQuery({
-    queryKey: ['billing', 'statement', companyId, clientId],
-    queryFn: () => billingService.getClientStatement(companyId, clientId!),
-    enabled: !!clientId,
-  });
-}
-
-export function useBillingMutations(companyId: string) {
+export function useRegisterPayment() {
   const queryClient = useQueryClient();
-  
-  const registerPayment = useMutation({
-    mutationFn: (data: Partial<PaymentDto>) => billingService.registerPayment(companyId, data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['payments'] });
-      if (variables.clientId) {
-        queryClient.invalidateQueries({ queryKey: ['billing', 'account', companyId, variables.clientId] });
-        queryClient.invalidateQueries({ queryKey: ['billing', 'statement', companyId, variables.clientId] });
-      }
+
+  return useMutation<PaymentDto, ApiError, RegisterPaymentVariables>({
+    mutationFn: ({ data, options }) =>
+      billingService.registerPayment(data, options),
+    onSuccess: (payment) => {
+      const [paymentsKey, accountKey] =
+        getRegisterPaymentInvalidationKeys(payment.clientId);
+      void queryClient.invalidateQueries({ queryKey: paymentsKey });
+      void queryClient.invalidateQueries({ queryKey: accountKey });
     },
   });
-
-  return { registerPayment };
 }

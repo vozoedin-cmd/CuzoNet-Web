@@ -1,53 +1,55 @@
+export function decimalAmountToCents(value: string): number {
+  const normalized = value.trim();
+  const match = /^(\d+)(?:\.(\d{1,2}))?$/.exec(normalized);
+  if (match === null) {
+    throw new Error('El monto debe tener como máximo dos decimales.');
+  }
 
-import * as React from "react"
-import { PaymentStatus, PaymentMethod, InvoiceStatus } from "../api/billing.service"
-import { CheckCircle2, Clock, XCircle, Banknote, CreditCard, Building, Smartphone, Send } from "lucide-react"
-
-export function formatMoney(cents: number, currency: string) {
-  return new Intl.NumberFormat('es-MX', { style: 'currency', currency }).format(cents / 100);
+  const whole = BigInt(match[1]);
+  const fraction = BigInt((match[2] ?? '').padEnd(2, '0'));
+  const cents = whole * BigInt(100) + fraction;
+  if (cents > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error('El monto excede el máximo seguro.');
+  }
+  return Number(cents);
 }
 
-export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
-  const cfg = {
-    completed: { icon: CheckCircle2, label: 'Completado', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
-    pending: { icon: Clock, label: 'Pendiente', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-    failed: { icon: XCircle, label: 'Fallido', color: 'bg-red-500/10 text-red-500 border-red-500/20' },
-  };
-  const { icon: Icon, label, color } = cfg[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold rounded-full border uppercase tracking-wider ${color}`}>
-      <Icon className="h-3 w-3" /> {label}
-    </span>
-  )
+export function formatMoney(cents: number, currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat('es-GT', {
+      currency: currencyCode,
+      style: 'currency',
+    }).format(cents / 100);
+  } catch {
+    return (
+      new Intl.NumberFormat('es-GT', {
+        maximumFractionDigits: 2,
+        minimumFractionDigits: 2,
+      }).format(cents / 100) +
+      ' ' +
+      currencyCode
+    );
+  }
 }
 
-export function InvoiceStatusBadge({ status }: { status: InvoiceStatus }) {
-  const cfg = {
-    paid: { label: 'Pagada', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
-    open: { label: 'Abierta', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
-    cancelled: { label: 'Cancelada', color: 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20' },
-  };
-  const { label, color } = cfg[status];
-  return (
-    <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-semibold rounded border uppercase tracking-wider ${color}`}>
-      {label}
-    </span>
-  )
+export function formatPaymentDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No disponible';
+
+  return new Intl.DateTimeFormat('es-GT', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZoneName: 'short',
+  }).format(date);
 }
 
-export function PaymentMethodBadge({ method }: { method: PaymentMethod }) {
-  const cfg = {
-    cash: { icon: Banknote, label: 'Efectivo' },
-    transfer: { icon: Building, label: 'Transferencia' },
-    credit_card: { icon: CreditCard, label: 'T. Crédito' },
-    debit_card: { icon: CreditCard, label: 'T. Débito' },
-    oxxo: { icon: Smartphone, label: 'OXXO Pay' },
-    stripe: { icon: Send, label: 'Stripe' },
-  };
-  const { icon: Icon, label } = cfg[method] || { icon: Banknote, label: method };
-  return (
-    <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[10px] uppercase font-medium bg-muted text-muted-foreground">
-      <Icon className="h-3 w-3" /> {label}
-    </div>
-  )
+export function formatAccountDate(value: string | null): string {
+  if (value === null) return 'No disponible';
+  const date = new Date(value + 'T00:00:00.000Z');
+  if (Number.isNaN(date.getTime())) return 'No disponible';
+
+  return new Intl.DateTimeFormat('es-GT', {
+    dateStyle: 'medium',
+    timeZone: 'UTC',
+  }).format(date);
 }
