@@ -1,41 +1,79 @@
+﻿import { create } from 'zustand';
 
-import { create } from 'zustand';
+import type {
+  ServiceLifecycleStatus,
+  ServiceType,
+} from '../api/services.service';
 
 export type ServiceModalType = 'none' | 'create' | 'provision';
 
-interface ServicesState {
-  viewMode: 'table' | 'cards';
-  selectedServiceId: string | null;
-  drawerOpen: boolean;
-  activeModal: ServiceModalType;
-  filters: {
-    search: string;
-    lifecycleStatus: string;
-    serviceType: string;
-    planVersionId: string;
-    clientId: string;
-    billingDay: string;
-  };
-
-  setViewMode: (mode: 'table' | 'cards') => void;
-  selectService: (id: string | null) => void;
-  setDrawerOpen: (open: boolean) => void;
-  setActiveModal: (modal: ServiceModalType) => void;
-  setFilter: (key: string, value: string) => void;
-  clearFilters: () => void;
+interface ServiceFilters {
+  billingDay: string;
+  lifecycleStatus: ServiceLifecycleStatus | '';
+  search: string;
+  serviceType: ServiceType | '';
 }
 
-export const useServicesStore = create<ServicesState>((set) => ({
-  viewMode: 'table',
-  selectedServiceId: null,
-  drawerOpen: false,
-  activeModal: 'none',
-  filters: { search: '', lifecycleStatus: '', serviceType: '', planVersionId: '', clientId: '', billingDay: '' },
+interface ServicesState {
+  activeModal: ServiceModalType;
+  activeOperationId: string | null;
+  drawerOpen: boolean;
+  filters: ServiceFilters;
+  selectedClientId: string | null;
+  selectedServiceId: string | null;
+  viewMode: 'table' | 'cards';
+  clearFilters: () => void;
+  selectService: (serviceId: string | null) => void;
+  setActiveModal: (modal: ServiceModalType) => void;
+  setActiveOperationId: (operationId: string | null) => void;
+  setDrawerOpen: (open: boolean) => void;
+  setFilter: <TKey extends keyof ServiceFilters>(
+    key: TKey,
+    value: ServiceFilters[TKey],
+  ) => void;
+  setSelectedClientId: (clientId: string | null) => void;
+  setViewMode: (mode: 'table' | 'cards') => void;
+}
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-  selectService: (id) => set({ selectedServiceId: id, drawerOpen: !!id }),
-  setDrawerOpen: (open) => set({ drawerOpen: open, selectedServiceId: open ? undefined : null }),
-  setActiveModal: (modal) => set({ activeModal: modal }),
-  setFilter: (key, value) => set((state) => ({ filters: { ...state.filters, [key]: value } })),
-  clearFilters: () => set({ filters: { search: '', lifecycleStatus: '', serviceType: '', planVersionId: '', clientId: '', billingDay: '' } }),
+const emptyFilters: ServiceFilters = {
+  billingDay: '',
+  lifecycleStatus: '',
+  search: '',
+  serviceType: '',
+};
+
+export const useServicesStore = create<ServicesState>((set) => ({
+  activeModal: 'none',
+  activeOperationId: null,
+  drawerOpen: false,
+  filters: emptyFilters,
+  selectedClientId: null,
+  selectedServiceId: null,
+  viewMode: 'table',
+
+  clearFilters: () => set({ filters: emptyFilters }),
+  selectService: (selectedServiceId) =>
+    set({
+      activeOperationId: null,
+      drawerOpen: selectedServiceId !== null,
+      selectedServiceId,
+    }),
+  setActiveModal: (activeModal) => set({ activeModal }),
+  setActiveOperationId: (activeOperationId) => set({ activeOperationId }),
+  setDrawerOpen: (drawerOpen) =>
+    set((state) => ({
+      drawerOpen,
+      selectedServiceId: drawerOpen ? state.selectedServiceId : null,
+      ...(drawerOpen ? {} : { activeOperationId: null }),
+    })),
+  setFilter: (key, value) =>
+    set((state) => ({ filters: { ...state.filters, [key]: value } })),
+  setSelectedClientId: (selectedClientId) =>
+    set({
+      activeOperationId: null,
+      drawerOpen: false,
+      selectedClientId,
+      selectedServiceId: null,
+    }),
+  setViewMode: (viewMode) => set({ viewMode }),
 }));

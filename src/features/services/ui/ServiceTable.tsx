@@ -1,65 +1,63 @@
+﻿import type { ServiceDto } from '../api/services.service';
+import { useServicesStore } from '../model/services.store';
+import {
+  ServiceLifecycleStatusBadge,
+  ServiceTypeBadge,
+} from './ServiceBadges';
 
-import * as React from "react"
-import { ServiceDto } from "../api/services.service"
-import { ServiceLifecycleStatusBadge, ServiceTypeBadge } from "./ServiceBadges"
-import { useServicesStore } from "../model/services.store"
-
-export function ServiceTable({ services }: { services: ServiceDto[] }) {
-  const { selectService } = useServicesStore();
-
-  const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleDateString();
-  }
+export function ServiceTable({
+  services,
+}: {
+  services: readonly ServiceDto[];
+}) {
+  const selectService = useServicesStore((state) => state.selectService);
 
   return (
     <div className="w-full overflow-auto rounded-xl border bg-card">
       <table className="w-full text-sm text-left">
         <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
           <tr>
-            <th className="px-4 py-3 font-medium">Servicio ID / Cliente</th>
+            <th className="px-4 py-3 font-medium">Servicio</th>
             <th className="px-4 py-3 font-medium">Tipo / Plan</th>
-            <th className="px-4 py-3 font-medium">Estado Contrato</th>
-            <th className="px-4 py-3 font-medium">Día Fact.</th>
-            <th className="px-4 py-3 font-medium">Estado Técnico</th>
-            <th className="px-4 py-3 font-medium">Creado</th>
+            <th className="px-4 py-3 font-medium">Estado contractual</th>
+            <th className="px-4 py-3 font-medium">Facturación</th>
+            <th className="px-4 py-3 font-medium">Estado técnico</th>
+            <th className="px-4 py-3 font-medium">Inicio</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {services.map(srv => (
-            <tr 
-              key={srv.id} 
+          {services.map((service) => (
+            <tr
+              key={service.serviceId}
               className="hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => selectService(srv.id)}
+              onClick={() => selectService(service.serviceId)}
             >
               <td className="px-4 py-3">
-                <p className="font-mono text-xs">{srv.id}</p>
-                <p className="font-semibold text-xs text-muted-foreground">{srv.clientId}</p>
+                <p className="font-mono text-xs">{service.serviceId}</p>
+                <p className="text-xs text-muted-foreground">
+                  Cliente: {service.clientId}
+                </p>
               </td>
               <td className="px-4 py-3">
-                <div className="flex gap-2 mb-1"><ServiceTypeBadge type={srv.type} /></div>
-                <p className="text-xs">{srv.planVersionId}</p>
+                <ServiceTypeBadge type={service.serviceType} />
+                <p className="text-xs mt-1">{service.planVersionId}</p>
               </td>
               <td className="px-4 py-3">
-                <ServiceLifecycleStatusBadge status={srv.lifecycleStatus} />
+                <ServiceLifecycleStatusBadge status={service.lifecycleStatus} />
               </td>
               <td className="px-4 py-3 text-xs font-semibold">
-                Día {srv.billingDay}
+                Día {service.billingDay}
               </td>
-              <td className="px-4 py-3 text-xs">
-                <span className="text-muted-foreground italic">{srv.technicalStatus || 'Sin información técnica'}</span>
+              <td className="px-4 py-3 text-xs text-muted-foreground">
+                Sin operación técnica
               </td>
-              <td className="px-4 py-3 text-xs text-muted-foreground">{formatDate(srv.createdAt)}</td>
+              <td className="px-4 py-3 text-xs text-muted-foreground">
+                {service.startedOn ?? 'No disponible'}
+              </td>
             </tr>
           ))}
-          {services.length === 0 && (
-            <tr>
-              <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                No se encontraron servicios.
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
-  )
+  );
 }

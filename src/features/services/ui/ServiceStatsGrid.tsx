@@ -1,56 +1,61 @@
+﻿import { Archive, Pause, Play, ServerCrash } from 'lucide-react';
 
-import * as React from "react"
-import { Card, CardContent } from "@/components/ui/card"
-import { ServiceStatsDto } from "../api/services.service"
-import { ServerCrash, Play, Pause, Activity } from "lucide-react"
+import { Card, CardContent } from '@/components/ui/card';
 
-export function ServiceStatsGrid({ stats }: { stats?: ServiceStatsDto }) {
+import type { ServiceDto } from '../api/services.service';
+
+export function ServiceStatsGrid({
+  services,
+}: {
+  services: readonly ServiceDto[];
+}) {
+  const stats = [
+    {
+      icon: ServerCrash,
+      label: 'Total',
+      value: services.length,
+      color: 'text-primary bg-primary/10',
+    },
+    {
+      icon: Play,
+      label: 'Activos',
+      value: services.filter((item) => item.lifecycleStatus === 'active').length,
+      color: 'text-green-600 bg-green-500/10',
+    },
+    {
+      icon: Pause,
+      label: 'Suspendidos',
+      value: services.filter((item) => item.lifecycleStatus === 'suspended').length,
+      color: 'text-red-600 bg-red-500/10',
+    },
+    {
+      icon: Archive,
+      label: 'Pendientes',
+      value: services.filter((item) => item.lifecycleStatus === 'pending').length,
+      color: 'text-amber-600 bg-amber-500/10',
+    },
+  ];
+
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <Card>
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-primary/10 rounded-full">
-            <ServerCrash className="h-6 w-6 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Total Servicios</p>
-            <h3 className="text-2xl font-bold">{stats?.total ?? '--'}</h3>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-green-500/10 rounded-full">
-            <Play className="h-6 w-6 text-green-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Activos</p>
-            <h3 className="text-2xl font-bold">{stats?.active ?? '--'}</h3>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-red-500/10 rounded-full">
-            <Pause className="h-6 w-6 text-red-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Suspendidos</p>
-            <h3 className="text-2xl font-bold">{stats?.suspended ?? '--'}</h3>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="p-4 flex items-center gap-4">
-          <div className="p-3 bg-amber-500/10 rounded-full">
-            <Activity className="h-6 w-6 text-amber-500" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">Ops Pendientes</p>
-            <h3 className="text-2xl font-bold">{stats?.pendingOperations ?? '--'}</h3>
-          </div>
-        </CardContent>
-      </Card>
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card key={stat.label}>
+            <CardContent className="p-4 flex items-center gap-3">
+              <span className={'rounded-full p-2 ' + stat.color}>
+                <Icon className="h-5 w-5" />
+              </span>
+              <span>
+                <span className="block text-xs text-muted-foreground">
+                  {stat.label}
+                </span>
+                <span className="text-xl font-bold">{stat.value}</span>
+              </span>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
-  )
+  );
 }
