@@ -1,40 +1,51 @@
-
 import { create } from 'zustand';
 
+import type { ClientStatus } from '../api/clients.service';
+
 export type ClientModalType = 'none' | 'create' | 'edit' | 'archive';
+export type ClientViewMode = 'table' | 'cards';
+
+interface ClientFilters {
+  search: string;
+  status: ClientStatus | '';
+}
 
 interface ClientsState {
-  viewMode: 'table' | 'cards';
+  viewMode: ClientViewMode;
   selectedClientId: string | null;
   drawerOpen: boolean;
   activeModal: ClientModalType;
-  filters: {
-    search: string;
-    status: string;
-    type: string;
-    document: string;
-    phone: string;
-  };
-
-  setViewMode: (mode: 'table' | 'cards') => void;
+  filters: ClientFilters;
+  setViewMode: (mode: ClientViewMode) => void;
   selectClient: (id: string | null) => void;
   setDrawerOpen: (open: boolean) => void;
   setActiveModal: (modal: ClientModalType) => void;
-  setFilter: (key: string, value: string) => void;
+  setFilter: <TKey extends keyof ClientFilters>(
+    key: TKey,
+    value: ClientFilters[TKey],
+  ) => void;
   clearFilters: () => void;
 }
+
+const emptyFilters: ClientFilters = { search: '', status: '' };
 
 export const useClientsStore = create<ClientsState>((set) => ({
   viewMode: 'table',
   selectedClientId: null,
   drawerOpen: false,
   activeModal: 'none',
-  filters: { search: '', status: '', type: '', document: '', phone: '' },
+  filters: emptyFilters,
 
-  setViewMode: (mode) => set({ viewMode: mode }),
-  selectClient: (id) => set({ selectedClientId: id, drawerOpen: !!id }),
-  setDrawerOpen: (open) => set({ drawerOpen: open, selectedClientId: open ? undefined : null }),
-  setActiveModal: (modal) => set({ activeModal: modal }),
-  setFilter: (key, value) => set((state) => ({ filters: { ...state.filters, [key]: value } })),
-  clearFilters: () => set({ filters: { search: '', status: '', type: '', document: '', phone: '' } }),
+  setViewMode: (viewMode) => set({ viewMode }),
+  selectClient: (selectedClientId) =>
+    set({ selectedClientId, drawerOpen: selectedClientId !== null }),
+  setDrawerOpen: (drawerOpen) =>
+    set((state) => ({
+      drawerOpen,
+      selectedClientId: drawerOpen ? state.selectedClientId : null,
+    })),
+  setActiveModal: (activeModal) => set({ activeModal }),
+  setFilter: (key, value) =>
+    set((state) => ({ filters: { ...state.filters, [key]: value } })),
+  clearFilters: () => set({ filters: emptyFilters }),
 }));

@@ -1,145 +1,149 @@
+import {
+  apiClient,
+  type ApiRequestOptions,
+} from '@/services/api/api-client';
 
-import { apiClient } from '@/services/api/api-client';
-
-export type ClientStatus = 'active' | 'archived' | 'delinquent';
+export type ClientStatus = 'active' | 'archived';
 export type ClientType = 'person' | 'company';
-
-export interface ClientAddress {
-  id: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  isPrimary: boolean;
-}
+export type ClientContactType = 'phone' | 'email' | 'whatsapp';
 
 export interface ClientContact {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
+  type: ClientContactType;
+  value: string;
   isPrimary: boolean;
 }
 
-export interface ClientServiceDto {
-  id: string;
-  planName: string;
-  status: 'active' | 'suspended' | 'cancelled';
-  price: number;
-  installedAt: string;
-}
-
-export interface ClientAccountDto {
-  balance: number;
-  currency: string;
-  lastInvoiceDate: string | null;
-  status: 'up_to_date' | 'in_arrears';
+export interface ClientAddress {
+  addressLine: string;
+  isServiceAddress: boolean;
+  label?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ClientDto {
   id: string;
-  type: ClientType;
+  clientType: ClientType;
   legalName: string;
-  documentId: string;
+  documentType: string;
+  documentNumber: string;
   status: ClientStatus;
-  primaryPhone: string;
-  primaryEmail: string;
+  contacts: readonly ClientContact[];
+  addresses: readonly ClientAddress[];
   createdAt: string;
-  servicesCount: number;
-  balance: number;
+  updatedAt?: string;
 }
 
-export interface ClientDetailsDto extends ClientDto {
-  addresses: ClientAddress[];
-  contacts: ClientContact[];
-  notes: string;
-  updatedAt: string;
-}
-
-export interface ClientStatsDto {
+export interface ClientPageDto {
+  data: readonly ClientDto[];
+  page: number;
+  pageSize: number;
   total: number;
-  active: number;
-  archived: number;
-  withServices: number;
-  delinquent: number;
+}
+
+export interface ClientServiceDto {
+  billingDay: number;
+  clientId: string;
+  id: string;
+  lifecycleStatus: string;
+  planVersionId: string;
+  serviceType: string;
+  startedOn?: string;
+}
+
+export interface ClientAccountDto {
+  clientId: string;
+  creditCents: number;
+  currencyCode: string;
+  debtCents: number;
+  invoiceCount: number;
+  nextDueOn: string | null;
+  overdueCents: number;
 }
 
 export interface GetClientsParams {
-  search?: string;
-  status?: string;
-  type?: string;
-  document?: string;
-  phone?: string;
   page?: number;
-  limit?: number;
+  pageSize?: number;
+  search?: string;
+  status?: ClientStatus;
 }
 
-export interface GetClientsResponse {
-  clients: ClientDto[];
-  stats: ClientStatsDto;
-  total: number;
+export interface CreateClientRequest {
+  clientType: ClientType;
+  legalName: string;
+  documentType: string;
+  documentNumber: string;
+  contacts?: readonly ClientContact[];
+  addresses?: readonly ClientAddress[];
+  note?: string;
 }
 
-const isDemo = () => process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA === 'true';
+export interface UpdateClientRequest {
+  legalName?: string;
+  contacts?: readonly ClientContact[];
+  addresses?: readonly ClientAddress[];
+}
+
+export type ClientMutationOptions = Pick<
+  ApiRequestOptions,
+  'correlationId' | 'idempotencyKey' | 'signal'
+>;
+
+function buildClientsQuery(params: GetClientsParams): string {
+  const query = new URLSearchParams();
+
+  if (params.page !== undefined) query.set('page', String(params.page));
+  if (params.pageSize !== undefined) query.set('pageSize', String(params.pageSize));
+  if (params.search !== undefined && params.search.length > 0) {
+    query.set('search', params.search);
+  }
+  if (params.status !== undefined) query.set('status', params.status);
+
+  const serialized = query.toString();
+  return serialized.length > 0 ? '?' + serialized : '';
+}
+
+function mutationOptions(options: ClientMutationOptions = {}): ApiRequestOptions {
+  return {
+    ...options,
+    idempotencyKey: options.idempotencyKey ?? crypto.randomUUID(),
+  };
+}
 
 export const clientsService = {
-  getClients: async (companyId: string, params: GetClientsParams): Promise<GetClientsResponse> => {
-    if (isDemo()) {
-      const { getDemoClients } = await import('../model/demo-clients.fixture');
-      let data = getDemoClients().clients;
-      if (params.search) data = data.filter(c => c.legalName.toLowerCase().includes(params.search!.toLowerCase()) || c.documentId.includes(params.search!));
-      if (params.status) data = data.filter(c => c.status === params.status);
-      if (params.type) data = data.filter(c => c.type === params.type);
-      return { clients: data, stats: getDemoClients().stats, total: data.length };
-    }
-    const query = new URLSearchParams(params as Record<string, string>).toString();
-    return await apiClient.get<GetClientsResponse>(`/clientes?companyId=${companyId}&${query}`);
-  },
+  getClients: (params: GetClientsParams, signal?: AbortSignal): Promise<ClientPageDto> =>
+    apiClient.get<ClientPageDto>('/clientes' + buildClientsQuery(params), { signal }),
 
-  getClient: async (companyId: string, clientId: string): Promise<ClientDetailsDto> => {
-    if (isDemo()) {
-      const { getDemoClientDetails } = await import('../model/demo-clients.fixture');
-      return getDemoClientDetails(clientId);
-    }
-    return await apiClient.get<ClientDetailsDto>(`/clientes/${clientId}?companyId=${companyId}`);
-  },
+  getClient: (clientId: string, signal?: AbortSignal): Promise<ClientDto> =>
+    apiClient.get<ClientDto>('/clientes/' + clientId, { signal }),
 
-  getClientServices: async (companyId: string, clientId: string): Promise<ClientServiceDto[]> => {
-    if (isDemo()) {
-      const { getDemoClientServices } = await import('../model/demo-clients.fixture');
-      return getDemoClientServices(clientId);
-    }
-    return await apiClient.get<ClientServiceDto[]>(`/clientes/${clientId}/servicios?companyId=${companyId}`);
-  },
+  getClientServices: (clientId: string, signal?: AbortSignal): Promise<ClientServiceDto[]> =>
+    apiClient.get<ClientServiceDto[]>('/clientes/' + clientId + '/servicios', { signal }),
 
-  getClientAccount: async (companyId: string, clientId: string): Promise<ClientAccountDto> => {
-    if (isDemo()) {
-      const { getDemoClientAccount } = await import('../model/demo-clients.fixture');
-      return getDemoClientAccount(clientId);
-    }
-    return await apiClient.get<ClientAccountDto>(`/clientes/${clientId}/cuenta?companyId=${companyId}`);
-  },
+  getClientAccount: (clientId: string, signal?: AbortSignal): Promise<ClientAccountDto> =>
+    apiClient.get<ClientAccountDto>('/clientes/' + clientId + '/cuenta', { signal }),
 
-  create: async (companyId: string, data: Partial<ClientDetailsDto>): Promise<ClientDto> => {
-    if (isDemo()) return { ...data, id: 'cli-new' } as ClientDto;
-    return await apiClient.post<ClientDto>(`/clientes?companyId=${companyId}`, data, {
-      idempotencyKey: crypto.randomUUID(),
-    });
-  },
-
-  update: async (companyId: string, clientId: string, data: Partial<ClientDetailsDto>): Promise<ClientDto> => {
-    if (isDemo()) return { ...data, id: clientId } as ClientDto;
-    return await apiClient.put<ClientDto>(
-      `/clientes/${clientId}?companyId=${companyId}`,
+  create: (
+    data: CreateClientRequest,
+    options?: ClientMutationOptions,
+  ): Promise<ClientDto> =>
+    apiClient.post<ClientDto, CreateClientRequest>(
+      '/clientes',
       data,
-      { idempotencyKey: crypto.randomUUID() },
-    );
-  },
+      mutationOptions(options),
+    ),
 
-  archive: async (companyId: string, clientId: string): Promise<void> => {
-    if (isDemo()) return;
-    await apiClient.delete<void>(`/clientes/${clientId}?companyId=${companyId}`, {
-      idempotencyKey: crypto.randomUUID(),
-    });
-  }
+  update: (
+    clientId: string,
+    data: UpdateClientRequest,
+    options?: ClientMutationOptions,
+  ): Promise<ClientDto> =>
+    apiClient.put<ClientDto, UpdateClientRequest>(
+      '/clientes/' + clientId,
+      data,
+      mutationOptions(options),
+    ),
+
+  archive: (clientId: string, options?: ClientMutationOptions): Promise<void> =>
+    apiClient.delete<void>('/clientes/' + clientId, mutationOptions(options)),
 };
