@@ -58,12 +58,7 @@ export interface GetServicesParams {
 
 const isDemo = () => process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA === 'true';
 
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+const uuidv4 = () => crypto.randomUUID();
 
 export const servicesService = {
   getServices: async (companyId: string, params: GetServicesParams): Promise<{ services: ServiceDto[] }> => {
@@ -99,14 +94,14 @@ export const servicesService = {
 
   createService: async (companyId: string, clientId: string, data: Partial<ServiceDto>): Promise<ServiceDto> => {
     if (isDemo()) return { ...data, id: 'srv-' + uuidv4(), lifecycleStatus: 'pending' } as ServiceDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<ServiceDto>(`/clientes/${clientId}/servicios?companyId=${companyId}`, data, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<ServiceDto>(`/clientes/${clientId}/servicios?companyId=${companyId}`, data, { idempotencyKey });
   },
 
   requestOperation: async (companyId: string, serviceId: string, data: Record<string, unknown> & { type: string }): Promise<ServiceOperationDto> => {
     if (isDemo()) return { id: 'op-' + uuidv4(), serviceId, type: data.type as 'provision', status: 'queued', attemptCount: 0, maxAttempts: 3, lastError: null, queuedAt: new Date().toISOString(), startedAt: null, completedAt: null };
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<ServiceOperationDto>(`/servicios/${serviceId}/operaciones?companyId=${companyId}`, data, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<ServiceOperationDto>(`/servicios/${serviceId}/operaciones?companyId=${companyId}`, data, { idempotencyKey });
   },
 
   getOperation: async (companyId: string, operationId: string): Promise<ServiceOperationDto> => {

@@ -57,12 +57,7 @@ export interface GetPlansParams {
 
 const isDemo = () => process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA === 'true';
 
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+const uuidv4 = () => crypto.randomUUID();
 
 export const plansService = {
   getPlans: async (companyId: string, params: GetPlansParams): Promise<{ plans: PlanDto[], stats: PlanStatsDto }> => {
@@ -98,25 +93,25 @@ export const plansService = {
 
   createPlan: async (companyId: string, data: Partial<PlanDto>): Promise<PlanDto> => {
     if (isDemo()) return { ...data, id: 'plan-' + uuidv4(), status: 'inactive', versionsCount: 0 } as PlanDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<PlanDto>(`/planes?companyId=${companyId}`, data, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<PlanDto>(`/planes?companyId=${companyId}`, data, { idempotencyKey });
   },
 
   createPlanVersion: async (companyId: string, planId: string, data: Partial<PlanVersionDto>): Promise<PlanVersionDto> => {
     if (isDemo()) return { ...data, id: 'pv-' + uuidv4(), planId, status: 'draft', versionNumber: 99, createdAt: new Date().toISOString() } as PlanVersionDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<PlanVersionDto>(`/planes/${planId}/versiones?companyId=${companyId}`, data, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<PlanVersionDto>(`/planes/${planId}/versiones?companyId=${companyId}`, data, { idempotencyKey });
   },
 
   publishPlanVersion: async (companyId: string, planId: string, versionId: string): Promise<PlanVersionDto> => {
     if (isDemo()) return { id: versionId, planId, status: 'published', publishedAt: new Date().toISOString() } as PlanVersionDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<PlanVersionDto>(`/planes/${planId}/versiones/${versionId}/publicacion?companyId=${companyId}`, {}, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<PlanVersionDto>(`/planes/${planId}/versiones/${versionId}/publicacion?companyId=${companyId}`, {}, { idempotencyKey });
   },
 
   changePlanStatus: async (companyId: string, planId: string, status: PlanStatus): Promise<PlanDto> => {
     if (isDemo()) return { id: planId, status } as PlanDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.put<PlanDto>(`/planes/${planId}/estado?companyId=${companyId}`, { status }, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.put<PlanDto>(`/planes/${planId}/estado?companyId=${companyId}`, { status }, { idempotencyKey });
   }
 };

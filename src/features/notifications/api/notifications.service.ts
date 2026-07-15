@@ -107,8 +107,7 @@ export const notificationsService = {
 
   cancel: async (companyId: string, notificationId: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/notificaciones/${notificationId}/cancelacion?companyId=${companyId}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Error canceling notification');
+      await apiClient.post<void>(`/notificaciones/${notificationId}/cancelacion?companyId=${companyId}`);
     } catch (error) {
       if (isDemo()) return;
       throw error;

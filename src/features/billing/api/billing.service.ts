@@ -86,12 +86,7 @@ export interface GetPaymentsParams {
 
 const isDemo = () => process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_ENABLE_DEMO_DATA === 'true';
 
-const uuidv4 = () => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
+const uuidv4 = () => crypto.randomUUID();
 
 export const billingService = {
   getPayments: async (companyId: string, params: GetPaymentsParams): Promise<{ payments: PaymentDto[], stats: BillingStatsDto }> => {
@@ -134,7 +129,7 @@ export const billingService = {
 
   registerPayment: async (companyId: string, data: Partial<PaymentDto>): Promise<PaymentDto> => {
     if (isDemo()) return { ...data, id: 'pay-' + uuidv4(), unallocatedAmountCents: data.amountCents || 0, allocatedAmountCents: 0, status: 'completed', createdAt: new Date().toISOString() } as PaymentDto;
-    const idempotencyKey = 'idemp-' + uuidv4();
-    return await apiClient.post<PaymentDto>(`/pagos?companyId=${companyId}`, data, { 'Idempotency-Key': idempotencyKey });
+    const idempotencyKey = crypto.randomUUID();
+    return await apiClient.post<PaymentDto>(`/pagos?companyId=${companyId}`, data, { idempotencyKey });
   }
 };

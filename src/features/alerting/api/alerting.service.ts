@@ -94,9 +94,7 @@ export const alertingService = {
 
   acknowledge: async (companyId: string, alertId: string): Promise<void> => {
     try {
-      // POST without expecting JSON return body if standard 200/204
-      const res = await fetch(`/api/alerts/${alertId}/acknowledge?companyId=${companyId}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Error acknowledging alert');
+      await apiClient.post<void>(`/alerts/${alertId}/acknowledge?companyId=${companyId}`);
     } catch (error) {
       if (isDemo()) return; // Fake success
       throw error;
@@ -105,8 +103,7 @@ export const alertingService = {
 
   resolve: async (companyId: string, alertId: string): Promise<void> => {
     try {
-      const res = await fetch(`/api/alerts/${alertId}/resolve?companyId=${companyId}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Error resolving alert');
+      await apiClient.post<void>(`/alerts/${alertId}/resolve?companyId=${companyId}`);
     } catch (error) {
       if (isDemo()) return;
       throw error;

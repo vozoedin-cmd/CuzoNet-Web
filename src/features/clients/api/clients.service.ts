@@ -122,16 +122,24 @@ export const clientsService = {
 
   create: async (companyId: string, data: Partial<ClientDetailsDto>): Promise<ClientDto> => {
     if (isDemo()) return { ...data, id: 'cli-new' } as ClientDto;
-    return await apiClient.post<ClientDto>(`/clientes?companyId=${companyId}`, data);
+    return await apiClient.post<ClientDto>(`/clientes?companyId=${companyId}`, data, {
+      idempotencyKey: crypto.randomUUID(),
+    });
   },
 
   update: async (companyId: string, clientId: string, data: Partial<ClientDetailsDto>): Promise<ClientDto> => {
     if (isDemo()) return { ...data, id: clientId } as ClientDto;
-    return await apiClient.put<ClientDto>(`/clientes/${clientId}?companyId=${companyId}`, data);
+    return await apiClient.put<ClientDto>(
+      `/clientes/${clientId}?companyId=${companyId}`,
+      data,
+      { idempotencyKey: crypto.randomUUID() },
+    );
   },
 
   archive: async (companyId: string, clientId: string): Promise<void> => {
     if (isDemo()) return;
-    await apiClient.delete<void>(`/clientes/${clientId}?companyId=${companyId}`);
+    await apiClient.delete<void>(`/clientes/${clientId}?companyId=${companyId}`, {
+      idempotencyKey: crypto.randomUUID(),
+    });
   }
 };
