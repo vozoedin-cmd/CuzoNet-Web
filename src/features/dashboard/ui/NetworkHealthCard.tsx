@@ -1,66 +1,92 @@
+import { Activity, AlertTriangle, Gauge, ServerCrash } from 'lucide-react';
 
-import * as React from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Activity, ServerCrash, AlertTriangle, CheckCircle2 } from "lucide-react"
-import { NetworkHealthDto } from "../api/dashboard.service"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+import type { NetworkHealthDto } from '../api/dashboard.service';
+import { DashboardBlockError, DashboardBlockMeta, DashboardBlockSkeleton } from './DashboardStates';
+import { formatPercentage } from './DashboardFormatting';
+import { MetricCard } from './MetricCard';
 
 interface NetworkHealthCardProps {
   data?: NetworkHealthDto;
+  error: Error | null;
+  isFetching: boolean;
   isLoading: boolean;
+  updatedAt: number;
 }
 
-export function NetworkHealthCard({ data, isLoading }: NetworkHealthCardProps) {
-  if (isLoading) return <Skeleton className="h-[200px] w-full rounded-xl" />
-  if (!data) return null;
+export function NetworkHealthCard({
+  data,
+  error,
+  isFetching,
+  isLoading,
+  updatedAt,
+}: NetworkHealthCardProps) {
+  if (isLoading) return <DashboardBlockSkeleton cards={3} />;
+  if (error !== null) {
+    return <DashboardBlockError error={error} title="No se pudo cargar la salud de red" />;
+  }
+  if (data === undefined) return null;
 
-  const total = data.totalEquipments || 1;
-  const down = data.equipmentsDown;
-  const warning = data.equipmentsWarning;
-  const active = total - down - warning;
-  const availability = (((total - down) / total) * 100).toFixed(2);
+  const hasNoData =
+    data.totalEquipments === 0 &&
+    data.equipmentsDown === 0 &&
+    data.equipmentsWarning === 0 &&
+    data.criticalLinks.length === 0;
 
   return (
-    <Card className="col-span-1 md:col-span-2">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          Salud de la Red
-        </CardTitle>
-        <CardDescription>Disponibilidad global y estado de equipos</CardDescription>
+    <Card>
+      <CardHeader className="gap-3">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Salud de red
+          </CardTitle>
+          <CardDescription>
+            Equipamiento monitoreado y enlaces críticos disponibles.
+          </CardDescription>
+        </div>
+        <DashboardBlockMeta isFetching={isFetching} updatedAt={updatedAt} />
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col gap-6">
-          <div className="flex items-end justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Disponibilidad (SLA)</p>
-              <h2 className="text-3xl font-bold tracking-tight">{availability}%</h2>
-            </div>
-            <div className="flex gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                <span>{active}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <span>{warning}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <ServerCrash className="h-4 w-4 text-red-500" />
-                <span>{down}</span>
-              </div>
-            </div>
-          </div>
-          <div className="h-2 w-full flex overflow-hidden rounded-full bg-muted">
-            <div className="bg-green-500 transition-all duration-500" style={{ width: `${(active / total) * 100}%` }} />
-            <div className="bg-amber-500 transition-all duration-500" style={{ width: `${(warning / total) * 100}%` }} />
-            <div className="bg-red-500 transition-all duration-500" style={{ width: `${(down / total) * 100}%` }} />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {total} equipos monitoreados en total.
-          </p>
+      <CardContent className="space-y-4">
+        {hasNoData ? (
+          <p className="text-sm text-muted-foreground">Sin datos técnicos disponibles.</p>
+        ) : null}
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard
+            icon={Gauge}
+            title="Equipos monitoreados"
+            value={data.totalEquipments}
+          />
+          <MetricCard
+            icon={ServerCrash}
+            title="Equipos caídos"
+            value={data.equipmentsDown}
+          />
+          <MetricCard
+            icon={AlertTriangle}
+            title="Equipos con advertencia"
+            value={data.equipmentsWarning}
+          />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium">Enlaces críticos</h3>
+          {data.criticalLinks.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No hay utilización de enlaces críticos disponible.
+            </p>
+          ) : (
+            <ul className="divide-y rounded-md border">
+              {data.criticalLinks.map((link) => (
+                <li className="flex items-center justify-between gap-4 p-3 text-sm" key={link.id}>
+                  <span className="font-medium">{link.name}</span>
+                  <span>{formatPercentage(link.usagePercentage)}%</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

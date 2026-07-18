@@ -1,35 +1,36 @@
-
 import { apiClient } from '@/services/api/api-client';
 
 export interface DashboardOverviewDto {
-  totalActiveClients: number;
-  totalActiveServices: number;
-  monthlyExpectedRevenueCents: number;
   activeCriticalAlerts: number;
   downNetworkNodes: number;
+  monthlyExpectedRevenueCents: number;
+  totalActiveClients: number;
+  totalActiveServices: number;
 }
 
 export interface BillingSummaryDto {
   collectedThisMonthCents: number;
+  collectionRatePercentage: number;
   overdueThisMonthCents: number;
   unpaidInvoicesCount: number;
-  collectionRatePercentage: number;
 }
 
 export interface NetworkHealthDto {
-  totalEquipments: number;
+  criticalLinks: Array<{
+    id: string;
+    name: string;
+    usagePercentage: number;
+  }>;
   equipmentsDown: number;
   equipmentsWarning: number;
-  criticalLinks: Array<{ id: string; name: string; usagePercentage: number }>;
+  totalEquipments: number;
 }
 
 export const dashboardService = {
-  getOverview: (companyId: string) => 
-    apiClient.get<DashboardOverviewDto>(`/dashboard/overview?companyId=${companyId}`),
-    
-  getBillingSummary: (companyId: string) => 
-    apiClient.get<BillingSummaryDto>(`/dashboard/billing-summary?companyId=${companyId}`),
-    
-  getNetworkHealth: (companyId: string) => 
-    apiClient.get<NetworkHealthDto>(`/dashboard/network-health?companyId=${companyId}`),
+  getBillingSummary: (signal?: AbortSignal) =>
+    apiClient.get<BillingSummaryDto>('/dashboard/billing-summary', { signal }),
+  getNetworkHealth: (signal?: AbortSignal) =>
+    apiClient.get<NetworkHealthDto>('/dashboard/network-health', { signal }),
+  getOverview: (signal?: AbortSignal) =>
+    apiClient.get<DashboardOverviewDto>('/dashboard/overview', { signal }),
 };

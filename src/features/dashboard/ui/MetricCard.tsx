@@ -1,18 +1,23 @@
+import type { LucideIcon } from 'lucide-react';
 
-import * as React from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
-import { type LucideIcon } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface MetricCardProps {
-  title: string;
-  value?: string | number;
-  icon: LucideIcon;
   description?: string;
+  icon: LucideIcon;
   isLoading?: boolean;
+  title: string;
+  value?: number | string;
 }
 
-export function MetricCard({ title, value, icon: Icon, description, isLoading }: MetricCardProps) {
+export function MetricCard({
+  description,
+  icon: Icon,
+  isLoading = false,
+  title,
+  value,
+}: MetricCardProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -21,14 +26,16 @@ export function MetricCard({ title, value, icon: Icon, description, isLoading }:
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-8 w-1/2 mt-1" />
+          <Skeleton className="mt-1 h-8 w-1/2" />
         ) : (
-          <div className="text-2xl font-bold">{value !== undefined ? value : '--'}</div>
+          <div className="text-2xl font-bold">
+            {value === undefined ? 'No disponible' : value}
+          </div>
         )}
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        {description === undefined ? null : (
+          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

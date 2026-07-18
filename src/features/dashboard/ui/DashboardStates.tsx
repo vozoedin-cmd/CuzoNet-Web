@@ -1,42 +1,87 @@
+import { AlertCircle, InboxIcon, RefreshCw } from 'lucide-react';
 
-import * as React from "react"
-import { AlertCircle, InboxIcon } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 
-export function DashboardSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="h-10 w-48 bg-muted rounded animate-pulse" />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {[1,2,3,4,5,6,7,8].map(i => <div key={i} className="h-[120px] bg-muted rounded-xl animate-pulse" />)}
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <div className="col-span-1 md:col-span-2 h-[200px] bg-muted rounded-xl animate-pulse" />
-        <div className="col-span-1 md:col-span-2 h-[200px] bg-muted rounded-xl animate-pulse" />
-      </div>
-    </div>
-  )
+export function formatDashboardUpdatedAt(updatedAt: number): string {
+  if (updatedAt <= 0) return 'No disponible';
+
+  return new Intl.DateTimeFormat('es-GT', {
+    dateStyle: 'short',
+    timeStyle: 'medium',
+  }).format(new Date(updatedAt));
 }
 
-export function DashboardErrorState({ error }: { error: Error }) {
+export function DashboardBlockMeta({
+  isFetching,
+  updatedAt,
+}: {
+  isFetching: boolean;
+  updatedAt: number;
+}) {
   return (
-    <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-6 flex flex-col items-center justify-center text-center text-destructive h-[400px]">
-      <AlertCircle className="h-10 w-10 mb-4" />
-      <h3 className="text-lg font-bold mb-1">Error de Conexión</h3>
-      <p className="text-sm opacity-90 max-w-md">
-        No se pudo cargar el centro de operaciones. {error.message}
-      </p>
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-1" aria-live="polite">
+        {isFetching ? (
+          <>
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            Actualizando…
+          </>
+        ) : (
+          'Sin actualización en curso'
+        )}
+      </span>
+      <span>Última actualización: {formatDashboardUpdatedAt(updatedAt)}</span>
     </div>
-  )
+  );
 }
 
-export function DashboardEmptyState() {
+export function DashboardBlockError({
+  error,
+  title,
+}: {
+  error: Error;
+  title: string;
+}) {
   return (
-    <div className="rounded-xl border p-12 flex flex-col items-center justify-center text-center text-muted-foreground h-[400px] bg-card/50">
-      <InboxIcon className="h-12 w-12 mb-4 opacity-20" />
-      <h3 className="text-lg font-medium mb-1">Centro de Operaciones Vacío</h3>
-      <p className="text-sm max-w-sm mx-auto">
-        No hay datos disponibles en la red para mostrar en este momento. Registra tu primer cliente o enruta tu primer nodo.
-      </p>
+    <Card className="border-destructive/50">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base text-destructive">
+          <AlertCircle className="h-5 w-5" />
+          {title}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        {error.message}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function DashboardBlockEmpty({
+  description,
+  title,
+}: {
+  description: string;
+  title: string;
+}) {
+  return (
+    <Card>
+      <CardContent className="flex min-h-32 flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground">
+        <InboxIcon className="h-8 w-8 opacity-40" />
+        <p className="font-medium text-foreground">{title}</p>
+        <p className="text-sm">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function DashboardBlockSkeleton({ cards = 4 }: { cards?: number }) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" aria-label="Cargando">
+      {Array.from({ length: cards }, (_, index) => (
+        <Skeleton className="h-32 rounded-xl" key={index} />
+      ))}
     </div>
-  )
+  );
 }
